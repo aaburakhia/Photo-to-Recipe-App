@@ -98,7 +98,7 @@ def generate_recipe_with_gemini(predictions):
     dish_name = predicted_class_name.replace('_', ' ').title()
     
     try:
-        gemini_model = genai.GenerativeModel('gemini-pro')
+        gemini_model = genai.GenerativeModel('ggemini-2.0-flash-001')
         prompt = f"You are a helpful assistant chef. Provide a clear, concise recipe for the dish: {dish_name}. Format your response in Markdown with '### Description', '### Ingredients', and '### Instructions' sections."
         yield "🤖 Generating your recipe with Gemini AI... please wait."
         response = gemini_model.generate_content(prompt)
