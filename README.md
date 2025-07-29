@@ -1,14 +1,19 @@
 ---
-title: Photo To Recipe App
-emoji: 🏆
-colorFrom: yellow
-colorTo: green
+title: AI Food Critic
+emoji: 🧑‍🍳
+colorFrom: red
+colorTo: yellow
 sdk: gradio
-sdk_version: 5.38.2
+sdk_version: 4.19.1
 app_file: app.py
 pinned: false
-license: mit
-short_description: Upload your dish photo; get a recipe instantly.
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+# AI Food Critic: From Photo to Recipe
+
+This is a deep learning application that identifies food dishes from an uploaded image and then uses the Gemini API to generate a recipe.
+
+**Features:**
+-   Image classification powered by a fine-tuned **EfficientNet-B2** model trained on 30 classes from the Food-101 dataset.
+-   Recipe generation using **Google's Gemini AI**.
+-   Interactive and user-friendly interface built with **Gradio**.
