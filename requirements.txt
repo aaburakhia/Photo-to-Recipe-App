@@ -1,0 +1,8 @@
+torch
+torchvision
+numpy
+gradio
+Pillow
+google-generativeai
+scikit-learn
+seaborn
