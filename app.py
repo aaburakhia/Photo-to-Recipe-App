@@ -1,5 +1,5 @@
 # ===================================================================
-# Updated: app.py (Improved UX)
+# Fat Julia: An AI Food Classifier and Recipe Generator
 # ===================================================================
 import torch
 import torch.nn as nn
@@ -11,10 +11,12 @@ import google.generativeai as genai
 import os
 import time
 
-# --- All setup and model loading code remains the same ---
-print("--- Initializing The AI Chef's Kitchen ---")
+# --- App Initialization ---
+print("--- Initializing Fat Julia's Kitchen ---")
 start_time = time.time()
 device = torch.device("cpu")
+
+# --- Define the List of 30 Trained Class Names ---
 chosen_classes_names = [
     'beef_carpaccio', 'beef_tartare', 'hamburger', 'pork_chop', 'steak', 'prime_rib',
     'chicken_curry', 'chicken_quesadilla', 'chicken_wings', 'fish_and_chips',
@@ -23,8 +25,11 @@ chosen_classes_names = [
     'macaroni_and_cheese', 'pad_thai', 'pho', 'ramen', 'ravioli', 'risotto',
     'spaghetti_bolognese', 'spaghetti_carbonara', 'pizza'
 ]
+num_classes = len(chosen_classes_names)
+
+# --- Load the Trained Vision Model ---
 model = models.efficientnet_b2(weights=None)
-model.classifier[1] = nn.Linear(model.classifier[1].in_features, len(chosen_classes_names))
+model.classifier[1] = nn.Linear(model.classifier[1].in_features, num_classes)
 model_path = 'food101_advanced_BEST.pth'
 try:
     model.load_state_dict(torch.load(model_path, map_location=device))
@@ -33,7 +38,9 @@ try:
     print(f"Vision model loaded in {time.time() - start_time:.2f} seconds.")
 except Exception as e:
     model = None
-    print(f"FATAL: Error loading model weights: {e}")
+    print(f"FATAL: Error loading vision model weights: {e}")
+
+# --- Define Preprocessing and Configure Generative AI ---
 val_test_transform = transforms.Compose([
     transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(),
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -51,15 +58,14 @@ except Exception as e:
     gemini_model = None
     print(f"Error configuring Google API: {e}")
 
-# --- THE NEW, UNIFIED AND POLISHED PIPELINE FUNCTION ---
+# --- Core Pipeline Function ---
 def identify_and_generate_recipe(input_image):
     if model is None:
         return None, "The vision model failed to load. Please check the logs."
     if input_image is None:
         return None, "Please upload an image first."
 
-    # --- Stage 1: Local Model Classification ---
-    yield None, "🔍 Analyzing photo..."
+    yield None, "🔍 **Analyzing your photo...**"
     img_pil = Image.fromarray(input_image.astype('uint8'), 'RGB')
     img_tensor = val_test_transform(img_pil).unsqueeze(0).to(device)
     with torch.no_grad():
@@ -71,35 +77,37 @@ def identify_and_generate_recipe(input_image):
     local_prediction = max(confidences, key=confidences.get)
     final_dish_name = local_prediction
     
-    # --- Stage 2: Gemini "Second Opinion" if needed ---
-    confidence_threshold = 0.80
-    if top_confidence < confidence_threshold:
-        yield confidences, "🤔 Hmm, that's a tricky one. Consulting our culinary expert..."
+    if top_confidence < 0.80:
+        yield confidences, "🤔 **Hmm, a tricky one. Consulting a culinary expert...**"
         if not gemini_model:
             yield confidences, "Error: The culinary expert is unavailable (API Key might be missing)."
             return
 
         try:
-            # Ask Gemini for an unconstrained identification
             prompt = ["What is the most specific name of the food dish in this image?", img_pil]
             response = gemini_model.generate_content(prompt)
-            # We will now trust Gemini's answer for the recipe
-            final_dish_name = response.text.strip()
+            gemini_prediction_raw = response.text.strip().lower()
+            gemini_prediction_clean = gemini_prediction_raw.split(',')[0].split('(')[0].strip().replace(" ", "_")
+            if gemini_prediction_clean in chosen_classes_names:
+                final_dish_name = gemini_prediction_clean
         except Exception as e:
-            # If Gemini fails, we gracefully fall back to our local model's best guess.
             print(f"Gemini vision call failed: {e}")
             pass
 
-    # --- Stage 3: Recipe Generation ---
     dish_name_for_prompt = final_dish_name.replace('_', ' ').title()
-    yield confidences, f"✅ **Dish Identified:** `{dish_name_for_prompt}`\n\n🧑‍🍳 The ones and zeros are firing up the kitchen to craft your recipe..."
-
+    yield confidences, f"✅ **Dish Identified:** `{dish_name_for_prompt}`\n\n**🧑‍🍳 The ones and zeros are firing up the kitchen to craft your recipe...**"
     if not gemini_model:
         yield confidences, "Error: The AI chef is unavailable (API Key might be missing)."
         return
 
     try:
-        recipe_prompt = f"You are an expert chef. Provide a clear, high-quality recipe for the dish: {dish_name_for_prompt}. Format the response in Markdown with '### Description', '### Ingredients', and '### Instructions' sections."
+        recipe_prompt = f"""
+                        You are an expert chef with a big personality named 'Fat Julia'. You are direct, a little impatient, and funny. Your goal is to provide a clear, high-quality recipe for the dish: {dish_name_for_prompt}.
+
+                        Format the response in Markdown with '### Description', '### Ingredients', and '### Instructions' sections.
+
+                        Maintain a friendly but firm, "tough love" tone. Start with a witty or sassy comment about the dish. Throughout the instructions, throw in one or two short, funny, and direct comments or tips. For example, "Don't even think about using pre-shredded cheese," or "If you burn the garlic, just throw it out and start over. I'm not kidding."
+                        """
         recipe_response = gemini_model.generate_content(recipe_prompt)
         yield confidences, recipe_response.text
     except Exception as e:
@@ -108,10 +116,10 @@ def identify_and_generate_recipe(input_image):
 def clear_all():
     return None, None, None
 
-# --- THE FINAL, POLISHED GRADIO APP ---
+# --- Gradio Interface ---
 with gr.Blocks(theme=gr.themes.Monochrome(), css="footer {display: none !important}") as app:
-    gr.Markdown("# 🧑‍🍳 AI Food Critic: From Photo to Recipe")
-    gr.Markdown("Upload a photo of your meal. Our AI will analyze the image and generate a recipe for you.")
+    gr.Markdown("# 🧑‍🍳 Fat Julia: From Photo to Recipe")
+    gr.Markdown("Upload a photo of your meal. I'll identify the dish and generate a recipe so you can make it yourself!")
     
     with gr.Row():
         with gr.Column(scale=1):
@@ -121,20 +129,19 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css="footer {display: none !importa
                 label_output = gr.Label(num_top_classes=5, label="Model Confidence")
 
         with gr.Column(scale=2):
-            # A single, clean output component for all messages and the recipe
-            status_and_recipe_output = gr.Markdown(label="Your Recipe")
+            recipe_output = gr.Markdown(label="Your Recipe")
 
     submit_button.click(
         fn=identify_and_generate_recipe,
         inputs=image_input,
-        outputs=[label_output, status_and_recipe_output]
+        outputs=[label_output, recipe_output]
     )
     
     image_input.clear(
         fn=clear_all,
         inputs=[],
-        outputs=[image_input, label_output, status_and_recipe_output]
+        outputs=[image_input, label_output, recipe_output]
     )
 
-print("\nLaunching Polished Gradio App...")
+print("\nLaunching Fat Julia...")
 app.launch()
