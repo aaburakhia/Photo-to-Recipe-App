@@ -94,7 +94,7 @@ def generate_recipe_with_gemini(predictions):
         Format the response in Markdown with '### Description', '### Ingredients', and '### Instructions' sections.
         Maintain a friendly but firm, "tough love" tone. Start with a witty or sassy comment about the dish. Throughout the instructions, throw in one or two short, funny, and direct comments or tips.
         """
-        yield "🧑‍🍳 The AI chef is in the kitchen! The ones and zeros are firing up to craft your recipe..."
+        yield "🧑‍🍳 **Alright, I know what this is. Don't mess this up. I'm writing your instructions now...**"
         response = gemini_model.generate_content(prompt)
         yield response.text
     except Exception as e:
@@ -113,7 +113,7 @@ custom_css = """
 
 with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
     gr.Markdown("# 🧑‍🍳 Fat Julia: From Photo to Recipe")
-    gr.Markdown("Upload a photo of your meal. I'll identify the dish and generate a recipe so you can make it yourself!")
+    gr.Markdown("Upload a photo of your meal. I'll identify the dish and generate a recipe so you can make it yourself. Let's get cooking.")
     
     # Hidden state to reliably pass prediction data
     prediction_state = gr.State()
@@ -123,7 +123,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
             image_input = gr.Image(type="numpy", label="Upload Your Food Photo")
             
             gr.Examples(
-                examples=["pizza.webp", "sushi.jpeg", "steak.webp"], 
+                examples=["examples/pizza.webp", "examples/sushi.jpeg", "examples/steak.webp"], 
                 inputs=image_input,
                 label="Click an example to try!"
             )
