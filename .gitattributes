@@ -40,3 +40,4 @@ examples/lasagna.jpg filter=lfs diff=lfs merge=lfs -text
 examples/julia_confident.png filter=lfs diff=lfs merge=lfs -text
 examples/julia_disappointed.png filter=lfs diff=lfs merge=lfs -text
 examples/julia_skeptical.png filter=lfs diff=lfs merge=lfs -text
+background.png filter=lfs diff=lfs merge=lfs -text
