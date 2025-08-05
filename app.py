@@ -148,7 +148,7 @@ def get_secret_ingredient(predictions):
     secret_text = secrets.get(dish, "The secret ingredient is to actually follow the recipe for once.")
     
     # The key change is returning a Gradio update
-    return gr.update(value=f"🤫 Fat Julia's Secret Tip: {secret_text}", visible=True)
+    return gr.update(value=f"{secret_text}", visible=True)
 
 def clear_all_ui_update():
     # We add one more output to hide the secret_tip_box
@@ -216,7 +216,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
         with gr.Column(scale=2):
             status_and_recipe_output = gr.Markdown(label="Status & Recipe", elem_id="recipe-output")
             # It's a Textbox, and it's hidden by default.
-            secret_tip_box = gr.Textbox(label="🤫 Chef's Secret Tip", visible=False, interactive=False)
+            secret_tip_box = gr.Textbox(label="🤫 Fat Julia's Secret Tip", visible=False, interactive=False)
 
     # Define the interactive logic
     submit_button.click(
