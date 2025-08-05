@@ -108,7 +108,10 @@ def generate_recipe_with_gemini(predictions):
         return f"Sorry, there was an issue generating the recipe: {str(e)}", gr.Button(visible=False)
 
 def get_secret_ingredient(predictions):
-    if not predictions: return "No secret for you."
+    # This function now returns an update object to make the tip box visible
+    if not predictions:
+        return gr.update(value="No secret for you.", visible=True)
+        
     dish = max(predictions, key=predictions.get)
     secrets = {
         'beef_carpaccio': "The secret is slicing the beef paper-thin. If you can read through it, you're doing it right.",
@@ -142,10 +145,14 @@ def get_secret_ingredient(predictions):
         'spaghetti_carbonara': "Using the heat of the pasta to cook the eggs, not direct heat. If you make scrambled eggs, you've failed.",
         'pizza': "A screaming hot oven and a pizza stone. You want to shock the dough into a crispy crust."
     }
-    return secrets.get(dish, "The secret ingredient is to actually follow the recipe for once.")
+    secret_text = secrets.get(dish, "The secret ingredient is to actually follow the recipe for once.")
+    
+    # The key change is returning a Gradio update
+    return gr.update(value=f"🤫 Fat Julia's Secret Tip: {secret_text}", visible=True)
 
 def clear_all_ui_update():
-    return None, None, "", gr.Button(visible=False), None, gr.Button(visible=False), gr.Row(visible=False)
+    # We add one more output to hide the secret_tip_box
+    return None, None, "", gr.Button(visible=False), None, gr.Button(visible=False), gr.Row(visible=False), gr.update(visible=False)
 
 # --- 5. DEFINE THE POLISHED GRADIO APP ---
 custom_css = """
@@ -198,7 +205,6 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
                                              show_label=False, 
                                              show_download_button=False, 
                                              show_fullscreen_button=False,
-                                             show_border=False,
                                              width=100, height=100, scale=0)
                 with gr.Column():
                     recipe_button = gr.Button(value="Generate Recipe")
@@ -209,6 +215,8 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
 
         with gr.Column(scale=2):
             status_and_recipe_output = gr.Markdown(label="Status & Recipe", elem_id="recipe-output")
+            # It's a Textbox, and it's hidden by default.
+            secret_tip_box = gr.Textbox(label="🤫 Chef's Secret Tip", visible=False, interactive=False)
 
     # Define the interactive logic
     submit_button.click(
@@ -227,16 +235,18 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
         outputs=[status_and_recipe_output, secret_button]
     )
 
+    # UPDATE: The secret button now updates the new tip box
     secret_button.click(
         fn=get_secret_ingredient,
         inputs=prediction_state,
-        outputs=status_and_recipe_output
+        outputs=secret_tip_box # Target the new Textbox
     )
     
+    # UPDATE: The clear function now needs to reset the new tip box
     image_input.clear(
         fn=clear_all_ui_update,
         inputs=[],
-        outputs=[image_input, label_output, status_and_recipe_output, recipe_button, mood_image_output, secret_button, controls_row]
+        outputs=[image_input, label_output, status_and_recipe_output, recipe_button, mood_image_output, secret_button, controls_row, secret_tip_box]
     )
 
 print("\nLaunching Fat Julia ...")
