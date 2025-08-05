@@ -198,7 +198,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
                                              show_label=False, 
                                              show_download_button=False, 
                                              show_fullscreen_button=False,
-                                             show_border=False
+                                             show_border=False,
                                              width=100, height=100, scale=0)
                 with gr.Column():
                     recipe_button = gr.Button(value="Generate Recipe")
