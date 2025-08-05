@@ -12,7 +12,7 @@ sdk_version: 5.39.0
 
 **A Capstone Project for the INFO-6147 Course at Fanshawe College.**
 
-![App Screenshot](URL_TO_YOUR_BEST_APP_SCREENSHOT_HERE) 
+![App Screenshot](examples/fat_Julia_demo.png) 
 
 ---
 
