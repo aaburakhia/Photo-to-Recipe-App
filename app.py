@@ -149,6 +149,9 @@ def clear_all_ui_update():
 
 # --- 5. DEFINE THE POLISHED GRADIO APP ---
 custom_css = """
+.gradio-container {
+    overflow-y: auto !important; /* Allow vertical scrolling */
+}
 /* 1. Apply Background Image to the main app container */
 body {
     background-image: url('/background.png') !important;
@@ -190,7 +193,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
             submit_button = gr.Button(value="Well? What is it?", variant="primary")
             
             with gr.Row(visible=False) as controls_row:
-                mood_image_output = gr.Image(interactive=False, show_share_button=False, show_label=False, show_download_button=False, width=100, height=100, scale=0)
+                mood_image_output = gr.Image(interactive=False, show_share_button=False, show_label=False, show_download_button=False, show_fullscreen_button=False, width=100, height=100, scale=0)
                 with gr.Column():
                     recipe_button = gr.Button(value="Generate Recipe")
                     secret_button = gr.Button(value="What's the Secret Ingredient?")
