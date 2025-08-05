@@ -55,8 +55,6 @@ The final model is a powerful engine, achieving a **weighted-average F1-score of
 
 The model excels at identifying dishes with unique visual signatures like **Spaghetti Carbonara (95.4% F1-score)** but finds fine-grained distinctions between visually similar dishes like **Steak vs. Pork Chop** more challenging. This is where the hybrid "second opinion" system provides a crucial safety net.
 
-*For a complete breakdown of the training process, a deep dive into the results, and the full classification report, please see the [**Project Report (PDF)**](LINK_TO_YOUR_PDF_REPORT_HERE).*
-*(Suggestion: Add your final PDF report to the repository and link to it here)*
 
 ## 🚀 How to Run Locally
 
