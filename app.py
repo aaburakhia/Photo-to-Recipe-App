@@ -17,6 +17,7 @@ start_time = time.time()
 device = torch.device("cpu")
 
 # --- 1. DEFINE THE LIST OF 30 CLASS NAMES ---
+# This list MUST be in the exact same order as the one you used for training.
 chosen_classes_names = [
     'beef_carpaccio', 'beef_tartare', 'hamburger', 'pork_chop', 'steak', 'prime_rib',
     'chicken_curry', 'chicken_quesadilla', 'chicken_wings', 'fish_and_chips',
@@ -59,8 +60,8 @@ except Exception as e:
 
 # --- 4. DEFINE PIPELINE FUNCTIONS ---
 def classify_food_image(input_image):
-    if model is None: return None, "Model failed to load.", gr.Button(visible=False), None, gr.Button(visible=False)
-    if input_image is None: return None, "", gr.Button(visible=False), None, gr.Button(visible=False)
+    if model is None: return None, "Model failed to load.", gr.Button(visible=False), None, gr.Button(visible=False), gr.Row(visible=False)
+    if input_image is None: return None, "", gr.Button(visible=False), None, gr.Button(visible=False), gr.Row(visible=False)
     
     img = Image.fromarray(input_image.astype('uint8'), 'RGB')
     img_tensor = val_test_transform(img).unsqueeze(0).to(device)
@@ -75,17 +76,17 @@ def classify_food_image(input_image):
     if top_confidence < 0.40:
         status_message = f"**Are you kidding me?** With this lighting, it could be `{predicted_class_name.replace('_', ' ')}` or a leather shoe. I can't work with this. Try a better photo."
         mood_image = "examples/julia_disappointed.png"
-        return confidences, status_message, gr.Button(visible=False), mood_image, gr.Button(visible=False)
+        return confidences, status_message, gr.Button(visible=False), mood_image, gr.Button(visible=False), gr.Row(visible=True)
     elif top_confidence < 0.80:
         status_message = f"**Hmm, I'm skeptical.** My gut says this is `{predicted_class_name.replace('_', ' ')}` ({top_confidence:.0%}). I'm watching you, but we can proceed."
         mood_image = "examples/julia_skeptical.png"
         button_text = f"Fine, Get Recipe for {predicted_class_name.replace('_', ' ').title()}"
-        return confidences, status_message, gr.Button(value=button_text, visible=True), mood_image, gr.Button(visible=False)
+        return confidences, status_message, gr.Button(value=button_text, visible=True), mood_image, gr.Button(visible=False), gr.Row(visible=True)
     else:
         status_message = f"✅ **Alright, that's clearly `{predicted_class_name.replace('_', ' ')}`.** Let's not waste time."
         mood_image = "examples/julia_confident.png"
         button_text = f"Get Recipe for {predicted_class_name.replace('_', ' ').title()}"
-        return confidences, status_message, gr.Button(value=button_text, visible=True), mood_image, gr.Button(visible=False)
+        return confidences, status_message, gr.Button(value=button_text, visible=True), mood_image, gr.Button(visible=False), gr.Row(visible=True)
 
 def generate_recipe_with_gemini(predictions):
     if not gemini_model: return "Error: AI Chef is unavailable.", gr.Button(visible=False)
@@ -143,74 +144,64 @@ def get_secret_ingredient(predictions):
     }
     return secrets.get(dish, "The secret ingredient is to actually follow the recipe for once.")
 
-def clear_all():
-    return None, None, "", gr.Button(visible=False), None, gr.Button(visible=False)
+def clear_all_ui_update():
+    return None, None, "", gr.Button(visible=False), None, gr.Button(visible=False), gr.Row(visible=False)
 
-# --- 5. THE FINAL, POLISHED GRADIO APP ---
-# ===================================================================
-# FINAL UI SECTION (with Layout Fixes)
-# ===================================================================
+# --- 5. DEFINE THE POLISHED GRADIO APP ---
+custom_css = """
+.gradio-container {
+    background-image: url('file=background.png') !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+}
+body::before {
+    content: "";
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    z-index: -1;
+}
+#recipe-output .prose { font-size: 16px !important; line-height: 1.6 !important; }
+#recipe-output .prose h3 { font-size: 24px !important; font-weight: 600 !important; margin-top: 20px !important; margin-bottom: 10px !important; }
+#recipe-output .prose ul li { margin-bottom: 8px !important; }
+#recipe-output .prose ol li { margin-bottom: 12px !important; line-height: 1.7 !important; }
+"""
 
-# --- The functions (classify_food_image, etc.) do not need to change ---
-# ... (all your functions from the previous version go here) ...
-
-# --- THE FINAL, POLISHED GRADIO APP ---
-with gr.Blocks(theme=gr.themes.Monochrome(), css="footer {display: none !important}") as app:
+with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
     gr.Markdown("# 🧑‍🍳 Fat Julia: From Photo to Recipe")
     gr.Markdown("Upload a photo of your meal. I'll identify the dish and generate a recipe. Let's get cooking.")
     
     prediction_state = gr.State()
     
     with gr.Row():
-        # --- LEFT COLUMN for inputs and controls ---
         with gr.Column(scale=1):
             image_input = gr.Image(type="numpy", label="Upload Your Food Photo")
             
             gr.Examples(
-                examples=["examples/pizza.jpg", "examples/lasagna.jpg", "examples/steak.jpg"],
+                examples=["examples/pizza.webp", "examples/lasagna.jpg", "examples/steak.webp"],
                 inputs=image_input,
                 label="Click an example to try!"
             )
             
             submit_button = gr.Button(value="Well? What is it?", variant="primary")
             
-            # We will make the container for the mood and buttons invisible by default
             with gr.Row(visible=False) as controls_row:
-                # Make the image non-interactive to hide the overlay buttons
                 mood_image_output = gr.Image(interactive=False, show_label=False, width=100, height=100, scale=0)
                 with gr.Column():
-                    recipe_button = gr.Button(value="Generate Recipe") # No need for visible=False here
+                    recipe_button = gr.Button(value="Generate Recipe")
                     secret_button = gr.Button(value="What's the Secret Ingredient?")
-            # --- END OF NEW LAYOUT ---
             
             with gr.Accordion("Show Confidence Scores", open=False):
                 label_output = gr.Label(num_top_classes=5, label="Model Confidence")
 
-        # --- RIGHT COLUMN for outputs ---
         with gr.Column(scale=2):
-            status_and_recipe_output = gr.Markdown(label="Status & Recipe")
-
-    # --- We need to update our functions to control the visibility of the new 'controls_row' ---
-    def classify_food_image_ui_update(input_image):
-        # This wrapper function calls your main classifier and then formats the output for the UI
-        confidences, status_message, recipe_btn_update, mood_image, secret_btn_update = classify_food_image(input_image)
-        
-        # The main change: we return an update to make the entire row visible or not
-        if recipe_btn_update.visible:
-            return confidences, status_message, recipe_btn_update, mood_image, secret_btn_update, gr.Row(visible=True)
-        else:
-            return confidences, status_message, recipe_btn_update, mood_image, secret_btn_update, gr.Row(visible=False)
-
-    def clear_all_ui_update():
-        # This wrapper function calls your clear function and adds the UI update
-        img_out, lbl_out, status_out, recipe_btn_out, mood_out, secret_btn_out = clear_all()
-        return img_out, lbl_out, status_out, recipe_btn_out, mood_out, secret_btn_out, gr.Row(visible=False)
+            status_and_recipe_output = gr.Markdown(label="Status & Recipe", elem_id="recipe-output")
 
     # Define the interactive logic
     submit_button.click(
-        fn=classify_food_image_ui_update, # Use the new wrapper function
+        fn=classify_food_image,
         inputs=image_input,
-        outputs=[label_output, status_and_recipe_output, recipe_button, mood_image_output, secret_button, controls_row] # Add controls_row to outputs
+        outputs=[label_output, status_and_recipe_output, recipe_button, mood_image_output, secret_button, controls_row]
     ).then(
         fn=lambda x: x,
         inputs=label_output,
@@ -230,9 +221,9 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css="footer {display: none !importa
     )
     
     image_input.clear(
-        fn=clear_all_ui_update, # Use the new wrapper function
+        fn=clear_all_ui_update,
         inputs=[],
-        outputs=[image_input, label_output, status_and_recipe_output, recipe_button, mood_image_output, secret_button, controls_row] # Add controls_row to outputs
+        outputs=[image_input, label_output, status_and_recipe_output, recipe_button, mood_image_output, secret_button, controls_row]
     )
 
 print("\nLaunching Fat Julia ...")
