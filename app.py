@@ -151,7 +151,7 @@ def clear_all_ui_update():
 custom_css = """
 /* 1. Apply Background Image to the main app container */
 body {
-    background-image: url('/file=background.png') !important;
+    background-image: url('/background.png') !important;
     background-size: cover !important;
     background-position: center center !important;
     background-repeat: no-repeat !important;
@@ -164,18 +164,6 @@ body::before {
     background-color: rgba(255, 255, 255, 0.85) !important;
     z-index: -1;
 }
-
-/* 2. Hide the overlay buttons (expand, share) on the mood image */
-#mood-avatar button {
-    display: none !important;
-}
-
-/* 3. Remove the border from the mood image */
-#mood-avatar {
-    border: none !important;
-    box-shadow: none !important;
-}
-
 /* Style the recipe output for readability */
 #recipe-output .prose { font-size: 16px !important; line-height: 1.6 !important; }
 #recipe-output .prose h3 { font-size: 24px !important; font-weight: 600 !important; margin-top: 20px !important; margin-bottom: 10px !important; }
@@ -202,7 +190,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
             submit_button = gr.Button(value="Well? What is it?", variant="primary")
             
             with gr.Row(visible=False) as controls_row:
-                mood_image_output = gr.Image(elem_id="mood-avatar", interactive=False, show_label=False, show_download_button=False, width=100, height=100, scale=0)
+                mood_image_output = gr.Image(interactive=False, show_label=False, show_download_button=False, width=100, height=100, scale=0)
                 with gr.Column():
                     recipe_button = gr.Button(value="Generate Recipe")
                     secret_button = gr.Button(value="What's the Secret Ingredient?")
