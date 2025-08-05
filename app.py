@@ -192,7 +192,7 @@ with gr.Blocks(theme=gr.themes.Monochrome(), css=custom_css) as app:
             image_input = gr.Image(type="numpy", label="Upload Your Food Photo")
             
             gr.Examples(
-                examples=["examples/pizza.webp", "examples/lasagna.jpg", "examples/steak.webp"],
+                examples=["examples/pizza.webp", "examples/lasagna.jpg", "examples/steak.webp", "examples/burger.jpg", "examples/lasagna2.webp"],
                 inputs=image_input,
                 label="Click an example to try!"
             )
